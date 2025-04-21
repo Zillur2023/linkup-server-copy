@@ -41,7 +41,6 @@ export const createChatIntoDB = async (
 ): Promise<void> => {
   try {
     const { senderId, receiverId, text, imageUrl, videoUrl, isSeen } = payload;
-    console.log({ senderId, receiverId });
 
     // 1. Validate sender and receiver
     // const [senderExists, receiverExists] = await Promise.all([
@@ -86,7 +85,6 @@ export const createChatIntoDB = async (
       isSeen,
       senderId, // <- cleaned up naming
     });
-    console.log({ createMessage });
 
     // 5. Update the chat with the new message
     Promise.all([chat.messages.push(createMessage?._id), await chat.save()]);
@@ -115,12 +113,8 @@ export const createChatIntoDB = async (
     console.log({ senderSocketId });
     console.log({ receiverSocketId });
 
-    const myName = "myNameIsZillur";
-
-    // io.to(senderSocketId).emit("newMessage", newMessage);
-    // io.to(receiverSocketId).emit("newMessage", newMessage);
-    io.to(senderSocketId).emit("newMessage", myName);
-    io.to(receiverSocketId).emit("newMessage", myName);
+    io.to(senderSocketId).emit("newMessage", newMessage);
+    io.to(receiverSocketId).emit("newMessage", newMessage);
 
     const chatSender = await getChat(senderId);
 
