@@ -41,6 +41,7 @@ export const createChatIntoDB = async (
 ): Promise<void> => {
   try {
     const { senderId, receiverId, text, imageUrl, videoUrl, isSeen } = payload;
+    console.log({ senderId, receiverId });
 
     // 1. Validate sender and receiver
     // const [senderExists, receiverExists] = await Promise.all([
@@ -111,6 +112,8 @@ export const createChatIntoDB = async (
 
     const senderSocketId = getSocketId(senderId);
     const receiverSocketId = getSocketId(receiverId);
+    console.log({ senderSocketId });
+    console.log({ receiverSocketId });
 
     const myName = "myNameIsZillur";
 
