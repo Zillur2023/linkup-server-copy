@@ -112,8 +112,12 @@ export const createChatIntoDB = async (
     const senderSocketId = getSocketId(senderId);
     const receiverSocketId = getSocketId(receiverId);
 
-    io.to(senderSocketId).emit("newMessage", newMessage);
-    io.to(receiverSocketId).emit("newMessage", newMessage);
+    const myName = "myNameIsZillur";
+
+    // io.to(senderSocketId).emit("newMessage", newMessage);
+    // io.to(receiverSocketId).emit("newMessage", newMessage);
+    io.to(senderSocketId).emit("newMessage", myName);
+    io.to(receiverSocketId).emit("newMessage", myName);
 
     const chatSender = await getChat(senderId);
 
