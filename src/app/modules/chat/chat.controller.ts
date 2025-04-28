@@ -15,11 +15,24 @@ const createChat = catchAsync(async (req, res) => {
   });
 });
 const getChatByUserId = catchAsync(async (req, res) => {
-  const { senderId, receiverId } = req.query as {
+  const {
+    senderId,
+    receiverId,
+    skip = "0",
+    limit = "10",
+  } = req.query as {
     senderId: string;
     receiverId?: string;
+    skip?: string;
+    limit?: string;
   };
-  const result = await ChatServices.getChatbyUserIdFromDB(senderId, receiverId);
+
+  const result = await ChatServices.getChatbyUserIdFromDB(
+    senderId,
+    receiverId,
+    parseInt(skip),
+    parseInt(limit)
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

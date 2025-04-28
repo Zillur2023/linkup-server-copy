@@ -86,6 +86,14 @@ export const createChatIntoDB = async (
       senderId, // <- cleaned up naming
     });
 
+    const populatedMessage = await createMessage.populate({
+      path: "senderId",
+      model: "User",
+    });
+
+    console.log({ createMessage });
+    console.log({ populatedMessage });
+
     // 5. Update the chat with the new message
     Promise.all([chat.messages.push(createMessage?._id), await chat.save()]);
 
@@ -99,6 +107,8 @@ export const createChatIntoDB = async (
       .populate("senderId")
       .populate("receiverId");
 
+    console.log({ newMessage });
+
     Promise.all([
       User.findByIdAndUpdate(senderId.toString(), {
         $push: { chats: chat?._id },
@@ -110,17 +120,13 @@ export const createChatIntoDB = async (
 
     const senderSocketId = getSocketId(senderId);
     const receiverSocketId = getSocketId(receiverId);
-    console.log({ senderSocketId });
-    console.log({ receiverSocketId });
 
-    io.to(senderSocketId).emit("newMessage", newMessage);
-    io.to(receiverSocketId).emit("newMessage", newMessage);
+    io.to(senderSocketId).emit("senderNewMessage", populatedMessage);
+    io.to(receiverSocketId).emit("receiverNewMessage", populatedMessage);
 
     const chatSender = await getChat(senderId);
 
-    console.log({ chatSender });
-
-    io.to(senderSocketId).emit("chat", chatSender);
+    // io.to(senderSocketId).emit("chat", chatSender);
     io.to(receiverSocketId).emit("chat", chatSender);
   } catch (error) {
     console.error("Error creating chat:", error);
@@ -131,7 +137,13 @@ export const createChatIntoDB = async (
   }
 };
 
-const getChatbyUserIdFromDB = async (senderId: string, receiverId?: string) => {
+const getChatbyUserIdFromDB = async (
+  senderId: string,
+  receiverId?: string,
+  skip = 0,
+  limit = 10
+) => {
+  console.log({ senderId, receiverId, skip, limit });
   try {
     // Validate senderId
     if (!Types.ObjectId.isValid(senderId)) {
@@ -152,7 +164,6 @@ const getChatbyUserIdFromDB = async (senderId: string, receiverId?: string) => {
       const chats = await Chat.find({
         $or: [{ senderId }, { receiverId: senderId }],
       })
-        .sort({ updatedAt: -1 })
         .sort({ updatedAt: -1 })
         .populate({
           path: "messages",
@@ -181,13 +192,23 @@ const getChatbyUserIdFromDB = async (senderId: string, receiverId?: string) => {
           { senderId: receiverId, receiverId: senderId },
         ],
       })
-        .sort({ updatedAt: -1 })
         .populate({
           path: "messages",
+          options: {
+            sort: { createdAt: -1 },
+            skip,
+            limit,
+          },
           populate: { path: "senderId", model: "User" },
         })
         .populate("senderId")
         .populate("receiverId");
+
+      if (chat && chat.messages) {
+        chat.messages = chat.messages.reverse(); // 👈 Fix: reverse so latest is bottom
+      }
+
+      console.log({ chat });
 
       return [chat];
     }
