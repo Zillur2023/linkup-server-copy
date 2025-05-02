@@ -14,24 +14,25 @@ const loginUser = catchAsync(async (req, res) => {
     httpOnly: true,
     // sameSite: "strict",
     sameSite: "none",
+    domain: ".onrender.com",
     maxAge: 1000 * 60 * 60 * 24 * 365,
   });
-  res.cookie("refreshToken", refreshToken, {
-    // secure: config.NODE_ENV === 'production',
-    httpOnly: true,
-    sameSite: "none",
-    maxAge: 1000 * 60 * 60 * 24 * 365,
-  });
+  // res.cookie("refreshToken", refreshToken, {
+  //   // secure: config.NODE_ENV === 'production',
+  //   httpOnly: true,
+  //   sameSite: "none",
+  //   maxAge: 1000 * 60 * 60 * 24 * 365,
+  // });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: `${user?.email} is logged in succesfully!`,
     // data: {
-    //   token:accessToken,
+    //   accessToken,
     // },
-    // data: { refreshToken, accessToken },
     data: null,
+    // data: { refreshToken, accessToken },
   });
 });
 
