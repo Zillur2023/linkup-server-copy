@@ -12,6 +12,7 @@ const loginUser = catchAsync(async (req, res) => {
   res.cookie("accessToken", accessToken, {
     // secure: config.NODE_ENV === 'production',
     httpOnly: true,
+    secure: true,
     // sameSite: "strict",
     sameSite: "none",
     domain: ".onrender.com",
