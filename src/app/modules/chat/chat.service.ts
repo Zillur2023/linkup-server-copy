@@ -86,7 +86,7 @@ export const createChatIntoDB = async (payload: ICreateChatIntoDB) => {
     });
 
     // 3. Update chat with new message and get the updated chat in one operation
-    const updatedChat = await Chat.findByIdAndUpdate(
+    await Chat.findByIdAndUpdate(
       { _id: chat._id },
       {
         $push: { messages: message._id },
