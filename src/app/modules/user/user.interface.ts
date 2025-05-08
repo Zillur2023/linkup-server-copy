@@ -14,7 +14,6 @@ export interface IUser {
   bio?: string;
   profileImage?: string[];
   coverImage?: string[];
-  chats?: Types.ObjectId[];
   followers: Types.ObjectId[]; // Array of ObjectIds referencing 'User'
   following: Types.ObjectId[]; // Array of ObjectIds referencing 'User'
   friendRequestsSent: Types.ObjectId[];

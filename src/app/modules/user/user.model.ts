@@ -14,7 +14,6 @@ export const userSchema = new Schema<IUser>(
     bio: { type: String },
     profileImage: { type: [String] },
     coverImage: { type: [String] },
-    chats: [{ type: Schema.Types.ObjectId, ref: "Chat", default: [] }],
     followers: [{ type: Schema.Types.ObjectId, ref: "User", default: [] }],
     following: [{ type: Schema.Types.ObjectId, ref: "User", default: [] }],
     friendRequestsSent: [

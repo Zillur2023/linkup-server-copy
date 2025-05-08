@@ -36,9 +36,7 @@ const getChat = async (currentUserId: string) => {
   }));
 };
 
-export const createChatIntoDB = async (
-  payload: ICreateChatIntoDB
-): Promise<void> => {
+export const createChatIntoDB = async (payload: ICreateChatIntoDB) => {
   try {
     const { senderId, receiverId, text, imageUrl, videoUrl, isSeen } = payload;
 
@@ -62,72 +60,69 @@ export const createChatIntoDB = async (
     //   );
     // }
 
-    // 2. Check if chat already exists between these two users
-    let chat = await Chat.findOne({
-      $or: [
-        { senderId, receiverId },
-        { senderId: receiverId, receiverId: senderId },
-      ],
-    })
-      .sort({ updatedAt: -1 })
-      .populate("messages");
+    // 1. Find or create chat (single query with upsert)
+    const chat = await Chat.findOneAndUpdate(
+      {
+        $or: [
+          { senderId, receiverId },
+          { senderId: receiverId, receiverId: senderId },
+        ],
+      },
+      { $setOnInsert: { senderId, receiverId, messages: [] } },
+      {
+        upsert: true,
+        new: true,
+        // setDefaultsOnInsert: true,
+      }
+    );
 
-    // 3. If chat does not exist, create it
-    if (!chat) {
-      chat = await Chat.create({ senderId, receiverId });
-    }
-
-    // 4. Create the message
-    const createMessage = await Message.create({
+    // 2. Create message and populate sender in one step
+    const message = await Message.create({
       text,
       imageUrl,
       videoUrl,
       isSeen,
-      senderId, // <- cleaned up naming
+      senderId,
     });
+    console.log({ message });
 
-    const populatedMessage = await createMessage.populate({
+    // 3. Update chat with new message and get the updated chat in one operation
+    const updatedChat = await Chat.findByIdAndUpdate(
+      { _id: chat._id },
+      {
+        $push: { messages: message._id },
+        // $set: { updatedAt: new Date() },
+      },
+      { new: true } // Return the updated document
+    );
+    console.log({ updatedChat });
+
+    // Verify the message was added to the chat
+    // if (!updatedChat.messages.includes(message._id)) {
+    //   throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to add message to chat");
+    // }
+
+    // 4. Populate message with sender details (only necessary fields)
+    const populatedMessage = await Message.populate(message, {
       path: "senderId",
       model: "User",
+      select: "username profilePicture email", // Select only needed fields
     });
 
-    console.log({ createMessage });
-    console.log({ populatedMessage });
-
-    // 5. Update the chat with the new message
-    Promise.all([chat.messages.push(createMessage?._id), await chat.save()]);
-
-    const newMessage = await Chat.findById(chat?._id)
-      // .sort({ updatedAt: -1 })
-      // .populate("messages")
-      .populate({
-        path: "messages",
-        populate: { path: "senderId", model: "User" },
-      })
-      .populate("senderId")
-      .populate("receiverId");
-
-    console.log({ newMessage });
-
-    Promise.all([
-      User.findByIdAndUpdate(senderId.toString(), {
-        $push: { chats: chat?._id },
-      }),
-      User.findByIdAndUpdate(receiverId.toString(), {
-        $push: { chats: chat?._id },
-      }),
-    ]);
-
-    const senderSocketId = getSocketId(senderId);
+    // 5. Socket.io emissions (same as before)
+    // const senderSocketId = getSocketId(senderId);
     const receiverSocketId = getSocketId(receiverId);
 
-    io.to(senderSocketId).emit("senderNewMessage", populatedMessage);
+    // io.to(senderSocketId).emit("senderNewMessage", populatedMessage);
     io.to(receiverSocketId).emit("receiverNewMessage", populatedMessage);
 
-    const chatSender = await getChat(senderId);
+    if (receiverSocketId) {
+      const receiverChat = await getChat(receiverId);
+      io.to(receiverSocketId).emit("chat", receiverChat);
+    }
 
-    // io.to(senderSocketId).emit("chat", chatSender);
-    io.to(receiverSocketId).emit("chat", chatSender);
+    // 6. Return the populated message
+    return populatedMessage;
   } catch (error) {
     console.error("Error creating chat:", error);
     throw new AppError(
