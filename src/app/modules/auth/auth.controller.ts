@@ -9,15 +9,15 @@ const loginUser = catchAsync(async (req, res) => {
   const result = await AuthServices.loginUser(req.body);
   const { user, refreshToken, accessToken } = result;
 
-  res.cookie("accessToken", accessToken, {
-    // secure: config.NODE_ENV === 'production',
-    httpOnly: true,
-    secure: true,
-    // sameSite: "strict",
-    sameSite: "none",
-    domain: ".onrender.com",
-    maxAge: 1000 * 60 * 60 * 24 * 365,
-  });
+  // res.cookie("accessToken", accessToken, {
+  //   // secure: config.NODE_ENV === 'production',
+  //   httpOnly: true,
+  //   secure: true,
+  //   // sameSite: "strict",
+  //   sameSite: "none",
+  //   domain: ".onrender.com",
+  //   maxAge: 1000 * 60 * 60 * 24 * 365,
+  // });
   // res.cookie("refreshToken", refreshToken, {
   //   // secure: config.NODE_ENV === 'production',
   //   httpOnly: true,
@@ -29,11 +29,9 @@ const loginUser = catchAsync(async (req, res) => {
     statusCode: httpStatus.OK,
     success: true,
     message: `${user?.email} is logged in succesfully!`,
-    // data: {
-    //   accessToken,
-    // },
-    data: null,
-    // data: { refreshToken, accessToken },
+
+    data: { refreshToken, accessToken },
+    // data: null,
   });
 });
 
@@ -50,7 +48,8 @@ const changePassword = catchAsync(async (req, res) => {
 });
 
 const refreshToken = catchAsync(async (req, res) => {
-  const { refreshToken } = req.cookies;
+  // const { refreshToken } = req.cookies;
+  const { refreshToken } = req.body;
 
   const result = await AuthServices.refreshToken(refreshToken);
   const { accessToken } = result; // Assuming refreshToken method returns an object with the access token
