@@ -84,7 +84,6 @@ export const createChatIntoDB = async (payload: ICreateChatIntoDB) => {
       isSeen,
       senderId,
     });
-    console.log({ message });
 
     // 3. Update chat with new message and get the updated chat in one operation
     const updatedChat = await Chat.findByIdAndUpdate(
@@ -95,7 +94,6 @@ export const createChatIntoDB = async (payload: ICreateChatIntoDB) => {
       },
       { new: true } // Return the updated document
     );
-    console.log({ updatedChat });
 
     // Verify the message was added to the chat
     // if (!updatedChat.messages.includes(message._id)) {
